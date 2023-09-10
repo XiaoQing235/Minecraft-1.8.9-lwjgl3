@@ -508,17 +508,23 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         } else Display.setDisplayMode(new DisplayMode(this.displayWidth, this.displayHeight));
     }
 
+
     private void setWindowIcon() {
-        final Util.EnumOS util$enumos = Util.getOSType();
+        Util.EnumOS util$enumos = Util.getOSType();
+
         if (util$enumos != Util.EnumOS.OSX) {
             InputStream inputstream = null;
             InputStream inputstream1 = null;
+
             try {
-                inputstream = this.mcDefaultResourcePack.getInputStream(new ResourceLocation("icons/icon_16x16.png"));
-                inputstream1 = this.mcDefaultResourcePack.getInputStream(new ResourceLocation("icons/icon_32x32.png"));
-                if (inputstream != null && inputstream1 != null)
+                //with "getResourceStream" method you can change icon raw from "assets" folder
+                inputstream = this.mcDefaultResourcePack.getResourceStream(new ResourceLocation("icons/icon_16x16.png"));
+                inputstream1 = this.mcDefaultResourcePack.getResourceStream(new ResourceLocation("icons/icon_32x32.png"));
+                if (inputstream != null && inputstream1 != null) {
+                    //this method working
                     Display.setIcon(new ByteBuffer[]{this.readImageToBuffer(inputstream), this.readImageToBuffer(inputstream1)});
-            } catch (final IOException ioexception) {
+                }
+            } catch (IOException ioexception) {
                 logger.error("Couldn't set icon", ioexception);
             } finally {
                 IOUtils.closeQuietly(inputstream);
@@ -526,6 +532,7 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
             }
         }
     }
+
 
     private static boolean isJvm64bit() {
         final String[] astring = new String[]{"sun.arch.data.model", "com.ibm.vm.bitmode", "os.arch"};
@@ -608,11 +615,15 @@ public class Minecraft implements IThreadListener, IPlayerUsage {
         if (this.renderGlobal != null) this.renderGlobal.loadRenderers();
     }
 
-    private ByteBuffer readImageToBuffer(final InputStream imageStream) throws IOException {
-        final BufferedImage bufferedimage = ImageIO.read(imageStream);
-        final int[] aint = bufferedimage.getRGB(0, 0, bufferedimage.getWidth(), bufferedimage.getHeight(), null, 0, bufferedimage.getWidth());
-        final ByteBuffer bytebuffer = ByteBuffer.allocate(4 * aint.length);
-        for (final int i : aint) bytebuffer.putInt(i << 8 | i >> 24 & 255);
+    private ByteBuffer readImageToBuffer(InputStream imageStream) throws IOException {
+        BufferedImage bufferedimage = ImageIO.read(imageStream);
+        int[] aint = bufferedimage.getRGB(0, 0, bufferedimage.getWidth(), bufferedimage.getHeight(), null, 0, bufferedimage.getWidth());
+        ByteBuffer bytebuffer = ByteBuffer.allocate(4 * aint.length);
+
+        for (int i : aint) {
+            bytebuffer.putInt(i << 8 | i >> 24 & 255);
+        }
+
         bytebuffer.flip();
         return bytebuffer;
     }
